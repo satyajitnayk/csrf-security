@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/satyajitnayk/server"
+	"github.com/satyajitnayk/csrf-security/server"
 )
 
 var host = "localhost"

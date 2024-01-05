@@ -77,7 +77,7 @@ func CheckAndRefreshTokens(oldAuthTokenString string, oldRefreshTokenString stri
 	authToken, err := jwt.ParseWithClaims(oldAuthTokenString, &models.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return verifyKey, nil
 	})
-	authTokenClaims, ok := authToken.Claims.(*mdoels.TokenClaims)
+	authTokenClaims, ok := authToken.Claims.(*models.TokenClaims)
 	if !ok {
 		return
 	}
@@ -96,7 +96,38 @@ func CheckAndRefreshTokens(oldAuthTokenString string, oldRefreshTokenString stri
 
 		newAuthTokenString = oldAuthTokenString
 		return
+	} else if validationErr, ok := err.(*jwt.ValidationError); ok {
+		log.Println("Auth token is not valid")
+		if validationErr.Errors&(jwt.ValidationErrorExpired) != 0 {
+			log.Println("Auth token is expired")
+
+			newAuthTokenString, newCsrfSecret, err = updateAuthTokenString(oldRefreshTokenString, oldAuthTokenString)
+
+			if err != nil {
+				return
+			}
+
+			newRefreshTokenString, err = updateRefreshTokenExp(oldRefreshTokenString)
+
+			if err != nil {
+				return
+			}
+
+			newRefreshTokenString, err = updateRefreshTokenCsrf(newRefreshTokenString, newCsrfSecret)
+			return
+		} else {
+			log.Println("error in auth token")
+			err = errors.New("error in auth token")
+			return
+		}
+	} else {
+		log.Println("error in auth token")
+		err = errors.New("error in auth token")
+		return
 	}
+
+	err = errors.New("Unauthorized")
+	return
 }
 
 func createAuthTokensString(uuid string, role string, csrfSecret string) (authTokenString string, err error) {
@@ -110,11 +141,11 @@ func createAuthTokensString(uuid string, role string, csrfSecret string) (authTo
 		csrfSecret,
 	}
 	authJwt := jwt.NewWithClaims(jwt.GetSigningMethod("RS256"), authClaims)
-	authTokenString, err := authJwt.SignedString(signKey)
+	authTokenString, err = authJwt.SignedString(signKey)
 	return
 }
 
-func createRefreshTokenString(uuid string, role string, csrfSecret string) {
+func createRefreshTokenString(uuid string, role string, csrfSecret string) (refreshTokenString string, err error) {
 	refreshTokenExpirationTime := time.Now().Add(models.RefreshTokenValidTime).Unix()
 	refreshJwtTokenId, err := db.StoreRefreshToken()
 	if err != nil {
@@ -131,11 +162,11 @@ func createRefreshTokenString(uuid string, role string, csrfSecret string) {
 	}
 
 	refreshJwt := jwt.NewWithClaims(jwt.GetSigningMethod("RS256"), refreshClaims)
-	refreshTokenString, err := refreshJwt.SignedString(signKey)
+	refreshTokenString, err = refreshJwt.SignedString(signKey)
 	return
 }
 
-func updateRefreshTokenExp() {
+func updateRefreshTokenExp() (newRefreshTokenString string, err error) {
 
 }
 

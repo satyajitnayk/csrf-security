@@ -10,8 +10,8 @@ import (
 )
 
 // not using any DB so using these variables
-var users = map[string]models.User{}
-var refreshTokens map[string]string
+var users = map[string]models.User{} // consider this as users table
+var refreshTokens map[string]string  // consider this as refresh_tokens table
 
 func InitDB() {
 	refreshTokens = make(map[string]string)
@@ -65,16 +65,33 @@ func FetchUserByUsername(username string) (models.User, string, error) {
 	return models.User{}, "", errors.New("User not found with given username")
 }
 
-func StoreRefreshToken() (jwtTokenId string, err error) {
+func StoreRefreshToken() (jwtId string, err error) {
+	jwtId, err = randomstrings.GenerateRandomString(32)
+	if err != nil {
+		return jwtId, err
+	}
 
+	// check jwtId unique or not
+	// generate a unique refresh token by repeatedly
+	// generating random strings until an unused one is found
+	for refreshTokens[jwtId] != "" {
+		jwtId, err = randomstrings.GenerateRandomString(32)
+		if err != nil {
+			return jwtId, err
+		}
+	}
+
+	refreshTokens[jwtId] = "valid"
+
+	return jwtId, err
 }
 
-func DeleteRefreshToken() {
-
+func DeleteRefreshToken(jwtId string) {
+	delete(refreshTokens, jwtId)
 }
 
-func CheckRefreshToken() bool {
-
+func CheckRefreshToken(jwtId string) bool {
+	return refreshTokens[jwtId] != ""
 }
 
 func LogUserIn(username string, password string) (models.User, string, error) {

@@ -110,5 +110,5 @@ func generateBcryptHash(password string) (string, error) {
 }
 
 func checkPasswordAgainstHash(passwordHash string, password string) error {
-	bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
+	return bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
 }

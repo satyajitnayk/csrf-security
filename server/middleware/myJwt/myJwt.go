@@ -240,8 +240,23 @@ func updateAuthTokenString(refreshTokenString string, oldAuthTokenString string)
 	}
 }
 
-func RevokeRefreshToken(uuid string, role string, csrfSecret string) (refreshTokenString string, err error) {
+func RevokeRefreshToken(refreshTokenString string) error {
+	// use the refershTokenString to get refreshToken
+	refreshToken, err := jwt.ParseWithClaims(refreshTokenString, &models.TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return verifyKey, nil
+	})
 
+	if err != nil {
+		return errors.New("Could not parse referch token with claims")
+	}
+	// use it to get the claims
+	refreshTokenClaims, ok := refreshToken.Claims.(*models.TokenClaims)
+	if !ok {
+		return errors.New("could not read refresh token claims ")
+	}
+	// delete refreshToken
+	db.DeleteRefreshToken(refreshTokenClaims.StandardClaims.Id)
+	return nil
 }
 
 func updateRefreshTokenCsrf() {

@@ -24,7 +24,7 @@ func recoverHandler(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Panic("Recovered! Panic:%+v", err)
+				log.Panic("Recovered! Panic: %+v", err)
 				http.Error(w, http.StatusText(500), 500)
 			}
 		}()
@@ -122,7 +122,7 @@ func logicHandler(w http.ResponseWriter, r *http.Request) {
 			} else {
 				// username not exists
 				role := "user"
-				uuid, err := db.StoreUser(strings.Join(r.Form["username"], ""), strings.Join(r.Form["password"], ""), role)
+				uuid, err = db.StoreUser(strings.Join(r.Form["username"], ""), strings.Join(r.Form["password"], ""), role)
 				if err != nil {
 					http.Error(w, http.StatusText(500), 500)
 				}

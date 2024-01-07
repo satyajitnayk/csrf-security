@@ -42,7 +42,7 @@ func StoreUser(username string, password string, role string) (uuid string, err 
 	return uuid, err
 }
 
-func DeleteUser(uuid string) (models.User, error) {
+func DeleteUser(uuid string) {
 	delete(users, uuid)
 }
 
@@ -111,5 +111,4 @@ func generateBcryptHash(password string) (string, error) {
 
 func checkPasswordAgainstHash(passwordHash string, password string) error {
 	bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
-
 }
